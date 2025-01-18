@@ -97,7 +97,7 @@ app.post('/webhook', (req, res) => {
           const buttonResponse = messageStatus.interactive.button_reply.id;
   
           if (buttonResponse === 'accept') {
-              console.log(messageStatus.text);
+              console.log(messageStatus);
             collection.updateOne(
               { phoneNumber: from, message: messageStatus.text },
               { $set: { status: 'Accepted' } }
