@@ -23,7 +23,7 @@ app.post('/send_messages', async (req,res)=>{
     collection.insertOne(store_data);
     const data = {
         messaging_product: "whatsapp",
-        to: phoneNumber,
+        to: `+91${phoneNumber}`,
         type: "interactive",
         interactive: {
           type: "button",
