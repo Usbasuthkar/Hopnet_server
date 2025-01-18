@@ -94,15 +94,16 @@ app.post('/webhook', (req, res) => {
         if (value.messages) {
           const messageStatus = value.messages[0];
           const from = messageStatus.from;
-            console.log(messageStatus.interactive);
-          const buttonResponse = messageStatus.interactive?.button_reply?.id;
+          const buttonResponse = messageStatus.interactive.button_reply.id;
   
           if (buttonResponse === 'accept') {
+              console.log(buttonResponse);
             collection.updateOne(
               { phoneNumber: from, message: messageStatus.text },
               { $set: { status: 'Accepted' } }
             );
           } else if (buttonResponse === 'reject') {
+              console.log(buttonResponse);
             collection.updateOne(
               { phoneNumber: from, message: messageStatus.text },
               { $set: { status: 'Rejected' } }
