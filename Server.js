@@ -99,13 +99,13 @@ app.post('/webhook', (req, res) => {
           if (buttonResponse === 'accept') {
               console.log(from);
             collection.updateOne(
-              { phoneNumber: from },
+              { phoneNumber: from, message: messageStatus.text },
               { $set: { status: 'Accepted' } }
             );
           } else if (buttonResponse === 'reject') {
               console.log(from);
             collection.updateOne(
-              { phoneNumber: from },
+              { phoneNumber: from, message: messageStatus.text },
               { $set: { status: 'Rejected' } }
             );
           }
