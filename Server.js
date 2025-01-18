@@ -87,10 +87,10 @@ app.get('/webhook', (req, res) => {
   });
 
 app.post('/webhook', (req, res) => {
-    console.log("Webhook received:", req.body); 
     const { entry } = req.body;
     entry.forEach((entryItem) => {
       entryItem.changes.forEach((change) => {
+          console.log(change);
         const value = change.value;
         if (value.messages) {
           const messageStatus = value.messages[0];
