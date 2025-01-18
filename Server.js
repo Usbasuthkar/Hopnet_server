@@ -65,6 +65,7 @@ app.post('/send_messages', async (req,res)=>{
         res.send(store_data);
       } catch (error) {
         console.error("Error sending message", error.response.data);
+          res.status(403).send(error.response.data);
       }    
 });
 
@@ -103,7 +104,6 @@ app.post('/webhook', (req, res) => {
               { $set: { status: 'Accepted' } }
             );
           } else if (buttonResponse === 'reject') {
-              console.log(from);
             collection.updateOne(
               { phoneNumber: from,u_id: messageStatus.context.id },
               { $set: { status: 'Rejected' } }
@@ -112,7 +112,6 @@ app.post('/webhook', (req, res) => {
         }
       });
     });
-    res.send("got it");
   });
   
 
