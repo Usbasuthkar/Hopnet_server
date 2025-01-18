@@ -19,8 +19,6 @@ const server = createServer(app);
 
 app.post('/send_messages', async (req,res)=>{
     const {message,phoneNumber} = req.body;
-    const store_data = { ...req.body, status: 'Pending',error:false };
-    collection.insertOne(store_data);
     const data = {
         messaging_product: "whatsapp",
         to: `+${phoneNumber}`,
@@ -61,7 +59,9 @@ app.post('/send_messages', async (req,res)=>{
             }
           }
         );
-        console.log("Message sent successfully", response.data);
+        console.log("Message sent successfully", response.data.messages[0].id);
+        const store_data = { ...req.body, status: 'Pending',u_id:response.data.messages[0].id};
+        collection.insertOne(store_data);
         res.send(store_data);
       } catch (error) {
         console.error("Error sending message", error.response.data);
@@ -97,15 +97,15 @@ app.post('/webhook', (req, res) => {
           const buttonResponse = messageStatus.interactive.button_reply.id;
   
           if (buttonResponse === 'accept') {
-              console.log(messageStatus);
+              console.log(messageStatus.context.id);
             collection.updateOne(
-              { phoneNumber: from, message: messageStatus.text },
+              { phoneNumber: from, u_id: messageStatus.context.id },
               { $set: { status: 'Accepted' } }
             );
           } else if (buttonResponse === 'reject') {
               console.log(from);
             collection.updateOne(
-              { phoneNumber: from, message: messageStatus.text },
+              { phoneNumber: from,u_id: messageStatus.context.id },
               { $set: { status: 'Rejected' } }
             );
           }
