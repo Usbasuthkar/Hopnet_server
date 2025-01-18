@@ -90,7 +90,7 @@ app.post('/webhook', (req, res) => {
     const { entry } = req.body;
     entry.forEach((entryItem) => {
       entryItem.changes.forEach((change) => {
-          console.log(change.statuses);
+          console.log(change.value);
         const value = change.value;
         if (value.messages) {
           const messageStatus = value.messages[0];
