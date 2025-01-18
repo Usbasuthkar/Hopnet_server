@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { createServer } = require('node:http');
 const mongodb = require('mongodb');
+const axios = require('axios');
 require('dotenv').config();
 
 const client = new mongodb.MongoClient(process.env.URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -72,7 +73,19 @@ app.get('/fetch_data', async (req,res)=>{
     res.json(data);
 }); 
 
+app.get('/webhook', (req, res) => {
+  const { 'hub.mode': mode, 'hub.challenge': challenge, 'hub.verify_token': verifyToken } = req.query;
+    if (verifyToken === process.env.VERIFY_TOKEN) {
+      console.log("Webhook verified successfully");
+      res.status(200).send(challenge);
+    } else {
+      console.log("not match");
+      res.status(403).send("Verification token mismatch");
+    }
+  });
+
 app.post('/webhook', (req, res) => {
+    console.log("Webhook received:", req.body); 
     const { entry } = req.body;
     entry.forEach((entryItem) => {
       entryItem.changes.forEach((change) => {
@@ -96,7 +109,7 @@ app.post('/webhook', (req, res) => {
         }
       });
     });
-    res.sendStatus(200);
+    res.send("got it");
   });
   
 
