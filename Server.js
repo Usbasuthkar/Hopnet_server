@@ -21,7 +21,7 @@ app.post('/send_messages', async (req,res)=>{
     const {message,phoneNumber} = req.body;
     const data = {
         messaging_product: "whatsapp",
-        to: `${phoneNumber}`,
+        to: `+${phoneNumber}`,
         type: "interactive",
         interactive: {
           type: "button",
