@@ -50,7 +50,7 @@ app.post('/send_messages', async (req,res)=>{
       };
       try {
         const response = await axios.post(
-          `https://graph.facebook.com/v14.0/${process.env.PHONE_NUMBER_ID}/messages`,
+          `https://graph.facebook.com/v21.0/${process.env.PHONE_NUMBER_ID}/messages`,
           data,
           {
             headers: {
