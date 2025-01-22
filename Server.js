@@ -52,7 +52,7 @@ app.post('/send_messages', async (req,res)=>{
           `https://graph.facebook.com/v21.0/${process.env.PHONE_NUMBER_ID}/messages`,
           data,
           {
-            headers:{
+            headers: {
               Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
               "Content-Type": "application/json"
             }
@@ -86,74 +86,76 @@ app.get('/webhook', (req, res) => {
     }
   });
 let button_response = false;
-app.post('/webhook', (req, res) => {
-    const { entry } = req.body;
-    entry.forEach((entryItem) => {
-      entryItem.changes.forEach((change) => {
-        const value = change.value;
-        if (value.messages) {
-          const messageStatus = value.messages[0];
-          const from = messageStatus.from;
-          const send_message_to_particular_whataspp_number = async (text_to_be_sent)=>{
-            const data = {
-              messaging_product: "whatsapp",
-              to: `+${from}`,
-              type: "text",
-              text: {
-                body: text_to_be_sent,
+app.post('/webhook', async (req, res) => {
+  const { entry } = req.body;
+
+  entry.forEach((entryItem) => {
+    entryItem.changes.forEach(async (change) => {
+      const value = change.value;
+
+      if (value.messages) {
+        const messageStatus = value.messages[0];
+        const from = messageStatus.from;
+
+        const sendMessage = async (textToSend) => {
+          const data = {
+            messaging_product: "whatsapp",
+            to: `+${from}`,
+            type: "text",
+            text: { body: textToSend },
+          };
+
+          try {
+            const response = await axios.post(
+              `https://graph.facebook.com/v21.0/${process.env.PHONE_NUMBER_ID}/messages`,
+              data,
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
               }
-            };
-            try {
-                const response = await axios.post(
-                  `https://graph.facebook.com/v21.0/${process.env.PHONE_NUMBER_ID}/messages`,data,{
-                    headers: {
-                    Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
-                    "Content-Type": "application/json"
-                  }
-                }
-              );
-              console.log("Message sent successfully", response.data.messages[0].id);
-              } catch (error) {
-              console.error("Error sending message", error.response.data);
-              }   
-          }
-            console.log(messageStatus.interactive.button_reply);
-          if(messageStatus.interactive.button_reply !== undefined){
-            const buttonResponse = messageStatus.interactive.button_reply.id;
-            button_response = true
-          if (buttonResponse === 'accept') {
-              console.log(messageStatus.context.id);
-              collection.updateOne(
-                { phoneNumber: from, u_id: messageStatus.context.id },
-                { $set: { status: 'Accepted' } }
-             );
-            } else if (buttonResponse === 'reject') {
-              collection.updateOne(
-                { phoneNumber: from,u_id: messageStatus.context.id },
-                { $set: { status: 'Rejected' } }
-              );
-              send_message_to_particular_whataspp_number("Can you please state the reason for Rejection below?");
-              collection.updateOne(
-                { phoneNumber: from,u_id: messageStatus.context.id },
-                { $set: { Reason_for_rejection: "Did not state any reason yet" } }
-              );
-            }
-          }
-          else if(button_response){
-            send_message_to_particular_whataspp_number("Thank you for the response!!");
-            collection.updateOne(
-              { phoneNumber: from,u_id: messageStatus.context.id },
-              { $set: { Reason_for_rejection: "<gotta add something here>"} }
             );
+            console.log("Message sent successfully", response.data.messages[0].id);
+          } catch (error) {
+            console.error("Error sending message", error.response.data);
           }
-          else{
-            send_message_to_particular_whataspp_number("We will try to connect to you soon");
+        };
+
+        if (messageStatus.interactive && messageStatus.interactive.button_reply) {
+          const buttonResponse = messageStatus.interactive.button_reply.id;
+
+          if (buttonResponse === 'accept') {
+            await collection.updateOne(
+              { phoneNumber: from, u_id: messageStatus.context.id },
+              { $set: { status: 'Accepted' } }
+            );
+            sendMessage("Thank you! Your response has been recorded.");
+          } else if (buttonResponse === 'reject') {
+            await collection.updateOne(
+              { phoneNumber: from, u_id: messageStatus.context.id },
+              { $set: { status: 'Rejected', Reason_for_rejection: "Awaiting reason" } }
+            );
+            sendMessage("Can you please state the reason for rejection?");
           }
+        } else if (messageStatus.text) {
+          const rejectionReason = messageStatus.text.body;
+
+          await collection.updateOne(
+            { phoneNumber: from, u_id: messageStatus.context.id, status: 'Rejected' },
+            { $set: { Reason_for_rejection: rejectionReason } }
+          );
+
+          sendMessage("Thank you for providing the reason!");
+        } else {
+          sendMessage("We will try to connect with you soon.");
         }
-      });
+      }
     });
   });
-  
+
+  res.sendStatus(200);
+});
 
 server.listen(process.env.PORT,()=>{
     console.log(`server started at ${process.env.PORT}`);
