@@ -147,8 +147,8 @@ app.post('/webhook', async (req, res) => {
           const contextId = messageStatus.context?.id;
 
           if (contextId) {
+              console.log(contextId);
             await collection.updateOne(
-                console.log(contextId);
               { phoneNumber: from, u_id: contextId, status: 'Rejected' },
               { $set: { Reason_for_rejection: rejectionReason } }
             );
