@@ -124,7 +124,7 @@ app.post('/webhook', async (req, res) => {
 
         if (messageStatus.interactive && messageStatus.interactive.button_reply) {
           const buttonResponse = messageStatus.interactive.button_reply.id;
-          const contextId = messageStatus.context?.id; // Safely access 'id'
+          const contextId = messageStatus.context.id; // Safely access 'id'
 
           if (buttonResponse === 'accept' && contextId) {
             await collection.updateOne(
@@ -148,6 +148,7 @@ app.post('/webhook', async (req, res) => {
 
           if (contextId) {
             await collection.updateOne(
+                console.log(contextId);
               { phoneNumber: from, u_id: contextId, status: 'Rejected' },
               { $set: { Reason_for_rejection: rejectionReason } }
             );
