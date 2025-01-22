@@ -132,6 +132,7 @@ app.post('/webhook', async (req, res) => {
               { $set: { status: 'Accepted' } }
             );
             sendMessage("Thank you! Your response has been recorded.");
+              button_response = false;
           } else if (buttonResponse === 'reject' && contextId) {
             await collection.updateOne(
               { phoneNumber: from, u_id: contextId },
