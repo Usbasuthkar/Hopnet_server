@@ -16,7 +16,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 const server = createServer(app);
-
 app.post('/send_messages', async (req,res)=>{
     const {message,phoneNumber} = req.body;
     const data = {
@@ -53,14 +52,23 @@ app.post('/send_messages', async (req,res)=>{
           `https://graph.facebook.com/v21.0/${process.env.PHONE_NUMBER_ID}/messages`,
           data,
           {
-            headers: {
+            headers: {for (int i = 0; i < n; i++) {
+        int row_sum = 0;
+        for (int j = 0; j < m; j++) {
+            int x;
+            cin >> x;  // Read element of the matrix
+            row_sum += x;  // Add to the row sum
+        }
+        cout << row_sum << endl;  // Print the sum for the current row
+    }
+      }
               Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
               "Content-Type": "application/json"
             }
           }
         );
         console.log("Message sent successfully", response.data.messages[0].id);
-        const store_data = { ...req.body, status: 'Pending',u_id:response.data.messages[0].id};
+        const store_data = { ...req.body, status: 'Pending',u_id:response.data.messages[0].id,Reason_for_rejection:''};
         collection.insertOne(store_data);
         res.send(store_data);
       } catch (error) {
@@ -86,7 +94,7 @@ app.get('/webhook', (req, res) => {
       res.status(403).send("Verification token mismatch");
     }
   });
-
+let button_response = false;
 app.post('/webhook', (req, res) => {
     const { entry } = req.body;
     entry.forEach((entryItem) => {
@@ -95,19 +103,59 @@ app.post('/webhook', (req, res) => {
         if (value.messages) {
           const messageStatus = value.messages[0];
           const from = messageStatus.from;
-          const buttonResponse = messageStatus.interactive.button_reply.id;
-  
+          const send_message_to_particular_whataspp_number = async (text_to_be_sent)=>{
+            const data = {
+              messaging_product: "whatsapp",
+              to: `+${from}`,
+              type: "text",
+              text: {
+                body: text_to_be_sent,
+              }
+            };
+            try {
+                const response = await axios.post(
+                  `https://graph.facebook.com/v21.0/${process.env.PHONE_NUMBER_ID}/messages`,data,{
+                    headers: {
+                    Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
+                    "Content-Type": "application/json"
+                  }
+                }
+              );
+              console.log("Message sent successfully", response.data.messages[0].id);
+              } catch (error) {
+              console.error("Error sending message", error.response.data);
+              }   
+          }
+          if(messageStatus.interactive.button_reply !== undefined){
+            const buttonResponse = messageStatus.interactive.button_reply.id;
+            button_response = true
           if (buttonResponse === 'accept') {
               console.log(messageStatus.context.id);
-            collection.updateOne(
-              { phoneNumber: from, u_id: messageStatus.context.id },
-              { $set: { status: 'Accepted' } }
-            );
-          } else if (buttonResponse === 'reject') {
+              collection.updateOne(
+                { phoneNumber: from, u_id: messageStatus.context.id },
+                { $set: { status: 'Accepted' } }
+             );
+            } else if (buttonResponse === 'reject') {
+              collection.updateOne(
+                { phoneNumber: from,u_id: messageStatus.context.id },
+                { $set: { status: 'Rejected' } }
+              );
+              send_message_to_particular_whataspp_number("Can you please state the reason for Rejection below?");
+              collection.updateOne(
+                { phoneNumber: from,u_id: messageStatus.context.id },
+                { $set: { Reason_for_rejection: "Did not state any reason yet" } }
+              );
+            }
+          }
+          else if(button_response){
+            send_message_to_particular_whataspp_number("Thank you for the response!!");
             collection.updateOne(
               { phoneNumber: from,u_id: messageStatus.context.id },
-              { $set: { status: 'Rejected' } }
+              { $set: { Reason_for_rejection: "<gotta add something here>"} }
             );
+          }
+          else{
+            send_message_to_particular_whataspp_number("We will try to connect to you soon");
           }
         }
       });
