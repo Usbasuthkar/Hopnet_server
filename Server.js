@@ -133,6 +133,7 @@ app.post('/webhook', async (req, res) => {
             );
             sendMessage("Thank you! Your response has been recorded.");
               button_response = false;
+              contextId = '';
           } else if (buttonResponse === 'reject' && contextId) {
             await collection.updateOne(
               { phoneNumber: from, u_id: contextId },
@@ -153,6 +154,7 @@ app.post('/webhook', async (req, res) => {
             );
             sendMessage("Thank you for providing the reason!");
               button_response = false;
+              contextId = '';
           } else {
             console.error("Context ID is missing for text message");
             sendMessage("We could not process your message. Please try again.");
