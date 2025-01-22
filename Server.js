@@ -86,6 +86,7 @@ app.get('/webhook', (req, res) => {
     }
   });
 let button_response = false;  
+let contextId = "";
 app.post('/webhook', async (req, res) => {
   const { entry } = req.body;
 
@@ -121,10 +122,9 @@ app.post('/webhook', async (req, res) => {
             console.error("Error sending message", error.response.data);
           }
         };
-
         if (messageStatus.interactive && messageStatus.interactive.button_reply) {
           const buttonResponse = messageStatus.interactive.button_reply.id;
-          const contextId = messageStatus.context.id; // Safely access 'id'
+          contextId = messageStatus.context.id;
 
           if (buttonResponse === 'accept' && contextId) {
             await collection.updateOne(
@@ -142,10 +142,8 @@ app.post('/webhook', async (req, res) => {
             console.error("Context ID is missing in the message");
             sendMessage("We could not process your response. Please try again.");
           }
-        } else if (messageStatus.text) {
+        } else if (messageStatus.text && button_response) {
           const rejectionReason = messageStatus.text.body;
-          const contextId = messageStatus.context?.id;
-
           if (contextId) {
               console.log(contextId);
             await collection.updateOne(
@@ -153,6 +151,7 @@ app.post('/webhook', async (req, res) => {
               { $set: { Reason_for_rejection: rejectionReason } }
             );
             sendMessage("Thank you for providing the reason!");
+              button_response = false;
           } else {
             console.error("Context ID is missing for text message");
             sendMessage("We could not process your message. Please try again.");
