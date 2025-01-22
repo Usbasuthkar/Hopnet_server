@@ -121,36 +121,28 @@ app.post('/webhook', async (req, res) => {
             console.error("Error sending message", error.response.data);
           }
         };
+          if (messageStatus.interactive && messageStatus.interactive.button_reply) {
+  const buttonResponse = messageStatus.interactive.button_reply.id;
+  const contextId = messageStatus.context?.id; // Use optional chaining to safely access 'id'
 
-        if (messageStatus.interactive && messageStatus.interactive.button_reply) {
-          const buttonResponse = messageStatus.interactive.button_reply.id;
+  if (buttonResponse === 'accept' && contextId) {
+    await collection.updateOne(
+      { phoneNumber: from, u_id: contextId },
+      { $set: { status: 'Accepted' } }
+    );
+    sendMessage("Thank you! Your response has been recorded.");
+  } else if (buttonResponse === 'reject' && contextId) {
+    await collection.updateOne(
+      { phoneNumber: from, u_id: contextId },
+      { $set: { status: 'Rejected', Reason_for_rejection: "Awaiting reason" } }
+    );
+    sendMessage("Can you please state the reason for rejection?");
+  } else {
+    console.error("Context ID is missing in the message");
+    sendMessage("We could not process your response. Please try again.");
+  }
+}
 
-          if (buttonResponse === 'accept') {
-            await collection.updateOne(
-              { phoneNumber: from, u_id: messageStatus.context.id },
-              { $set: { status: 'Accepted' } }
-            );
-            sendMessage("Thank you! Your response has been recorded.");
-          } else if (buttonResponse === 'reject') {
-            await collection.updateOne(
-              { phoneNumber: from, u_id: messageStatus.context.id },
-              { $set: { status: 'Rejected', Reason_for_rejection: "Awaiting reason" } }
-            );
-            sendMessage("Can you please state the reason for rejection?");
-          }
-        } else if (messageStatus.text) {
-          const rejectionReason = messageStatus.text.body;
-
-          await collection.updateOne(
-            { phoneNumber: from, u_id: messageStatus.context.id, status: 'Rejected' },
-            { $set: { Reason_for_rejection: rejectionReason } }
-          );
-
-          sendMessage("Thank you for providing the reason!");
-        } else {
-          sendMessage("We will try to connect with you soon.");
-        }
-      }
     });
   });
 
