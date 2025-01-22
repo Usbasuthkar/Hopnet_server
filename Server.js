@@ -52,16 +52,7 @@ app.post('/send_messages', async (req,res)=>{
           `https://graph.facebook.com/v21.0/${process.env.PHONE_NUMBER_ID}/messages`,
           data,
           {
-            headers: {for (int i = 0; i < n; i++) {
-        int row_sum = 0;
-        for (int j = 0; j < m; j++) {
-            int x;
-            cin >> x;  // Read element of the matrix
-            row_sum += x;  // Add to the row sum
-        }
-        cout << row_sum << endl;  // Print the sum for the current row
-    }
-      }
+            headers:{
               Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
               "Content-Type": "application/json"
             }
