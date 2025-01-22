@@ -117,6 +117,7 @@ app.post('/webhook', (req, res) => {
               console.error("Error sending message", error.response.data);
               }   
           }
+            console.log(messageStatus.interactive.button_reply);
           if(messageStatus.interactive.button_reply !== undefined){
             const buttonResponse = messageStatus.interactive.button_reply.id;
             button_response = true
