@@ -125,7 +125,7 @@ app.post('/webhook', async (req, res) => {
         if (messageStatus.interactive && messageStatus.interactive.button_reply) {
           const buttonResponse = messageStatus.interactive.button_reply.id;
           contextId = messageStatus.context.id;
-
+            button_response = true;
           if (buttonResponse === 'accept' && contextId) {
             await collection.updateOne(
               { phoneNumber: from, u_id: contextId },
